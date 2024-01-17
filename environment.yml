@@ -1,0 +1,16 @@
+name: spectral
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - pip
+  - pip:
+    - imagecodecs[all]
+    - --editable .
+  - numcodecs
+  - tifffile
+  - ipykernel
+  - pandas
+  - openpyxl
+  - matplotlib
+  - xarray
