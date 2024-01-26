@@ -46,3 +46,18 @@ def read_stack(dir_or_files: Path | Iterable[Path], *, dim: str):
         coords={dim: ["_".join(f.stem.split("_")[-2:]) for f in dir_or_files]},
         dims=[dim, "y", "x"],
     )
+
+
+def load_crop_rectangles(file: str | Path) -> dict[str, tuple[slice, slice]]:
+    def parse_line(line: str) -> tuple[str, tuple[slice, slice]]:
+        fov = line[:9]
+        values = line.rstrip()[29:-1]
+        d = eval(f"dict({values})")
+        crop = (
+            slice(d["Y"], d["Y"] + d["Height"]),
+            slice(d["X"], d["X"] + d["Width"]),
+        )
+        return fov, crop
+
+    with open(file) as f:
+        return dict(map(parse_line, f))
