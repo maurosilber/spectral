@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, TypedDict
 
 import numpy as np
+import pandas as pd
 import xarray
 from imagecodecs import jpegxr_decode, tiff_decode
 
@@ -48,16 +49,46 @@ def read_stack(dir_or_files: Path | Iterable[Path], *, dim: str):
     )
 
 
-def load_crop_rectangles(file: str | Path) -> dict[str, tuple[slice, slice]]:
-    def parse_line(line: str) -> tuple[str, tuple[slice, slice]]:
-        fov = line[:9]
-        values = line.rstrip()[29:-1]
-        d = eval(f"dict({values})")
-        crop = (
-            slice(d["Y"], d["Y"] + d["Height"]),
-            slice(d["X"], d["X"] + d["Width"]),
-        )
-        return fov, crop
+class Crop(TypedDict):
+    y: slice
+    x: slice
 
-    with open(file) as f:
-        return dict(map(parse_line, f))
+
+def yield_crop_rectangles(file: Path) -> Iterable[tuple[str, Crop]]:
+    with file.open() as f:
+        for line in f:
+            fov = line[:9]
+            values = line.rstrip()[29:-1]
+            d = eval(f"dict({values})")
+            crop: Crop = {
+                "y": slice(d["Y"], d["Y"] + d["Height"]),
+                "x": slice(d["X"], d["X"] + d["Width"]),
+            }
+            yield fov, crop
+
+
+def load_calibration(
+    file: str | Path,
+    *,
+    input_name: str,
+    output_name: str,
+) -> xarray.DataArray:
+    components_mapping = {
+        "AutoFL": "afl",
+        "DAPI": "dapi",
+        "Opal520": "o520",
+        "Opal540": "o540",
+        "Opal570": "o570",
+        "Opal620": "o620",
+        "Opal650": "o650",
+        "Opal690": "o690",
+    }
+
+    return (
+        pd.read_excel(file)
+        .drop(columns="#")
+        .rename(columns={"Input": input_name, **components_mapping})
+        .set_index(input_name)
+        .to_xarray()
+        .to_array(output_name, name="calibration")
+    )
