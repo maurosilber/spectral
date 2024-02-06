@@ -1,0 +1,4 @@
+imagecodecs[all]
+numpy
+pandas
+xarray
