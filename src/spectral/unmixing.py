@@ -1,5 +1,4 @@
 import numpy as np
-import statsmodels.api as sm
 import xarray
 
 
@@ -51,19 +50,33 @@ def weighted_least_squares(A: xarray.DataArray, b: xarray.DataArray):
     except KeyError:
         pass
 
-    A = A.values
-    b = b.values
-
-    def _wls(b: xarray.DataArray):
-        return sm.WLS(b, A, weights=1 / b).fit().params
-
-    shape = b.shape[:-1]
-    out = np.empty((*shape, A.shape[1]))
-    for ix in np.ndindex(shape):
-        out[ix] = _wls(b[ix])
+    out = _weighted_least_squares(
+        A=A.values,
+        b=b.values[..., None],
+        cov=b.values[..., None],
+    )[0][..., 0]
 
     return xarray.DataArray(
         out,
         coords=coords,
         dims=[*remaining_dims, output_dim],
     )
+
+
+def _weighted_least_squares(
+    A: np.ndarray,
+    b: np.ndarray,
+    cov: np.ndarray,
+):
+    assert A.ndim == 2
+    assert b.shape[-2] == A.shape[0]
+    assert b.shape[-1] == 1
+
+    if cov.shape == b.shape:
+        cov = np.swapaxes(cov, -2, -1)
+        _ATcov = A.T / cov
+    else:
+        _ATcov = A.T @ np.linalg.inv(cov)
+    p_cov = np.linalg.inv(_ATcov @ A)
+    p = p_cov @ (_ATcov @ b)
+    return p, p_cov
