@@ -4,6 +4,7 @@ from typing import Iterable, TypedDict
 import numpy as np
 import pandas as pd
 import xarray
+from dask_checkpoint import task
 from imagecodecs import jpegxr_decode, tiff_decode
 
 
@@ -67,6 +68,7 @@ def yield_crop_rectangles(file: Path) -> Iterable[tuple[str, Crop]]:
             yield fov, crop
 
 
+@task()
 def load_calibration(
     file: str | Path,
     *,
