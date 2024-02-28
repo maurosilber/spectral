@@ -33,7 +33,11 @@ def lstsq(
     )
 
 
-def weighted_least_squares(A: xarray.DataArray, b: xarray.DataArray):
+def weighted_least_squares(
+    A: xarray.DataArray,
+    b: xarray.DataArray,
+    var: xarray.DataArray,
+):
     if A.dims[0] in b.dims:
         common_dim, output_dim = A.dims
     else:
@@ -42,6 +46,7 @@ def weighted_least_squares(A: xarray.DataArray, b: xarray.DataArray):
 
     A = A.transpose(common_dim, output_dim).sortby(common_dim)
     b = b.transpose(*remaining_dims, common_dim).sortby(common_dim)
+    var = var.transpose(*remaining_dims, common_dim).sortby(common_dim)
     assert (A.coords[common_dim] == b.coords[common_dim]).all()
 
     coords = {**A.coords, **b.coords}
@@ -53,7 +58,7 @@ def weighted_least_squares(A: xarray.DataArray, b: xarray.DataArray):
     out = _weighted_least_squares(
         A=A.values,
         b=b.values[..., None],
-        cov=b.values[..., None],
+        cov=var.values[..., None],
     )[0][..., 0]
 
     return xarray.DataArray(
