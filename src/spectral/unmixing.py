@@ -77,11 +77,15 @@ def _weighted_least_squares(
     assert b.shape[-2] == A.shape[0]
     assert b.shape[-1] == 1
 
-    if cov.shape == b.shape:
-        cov = np.swapaxes(cov, -2, -1)
-        _ATcov = A.T / cov
+    if cov.shape[-2:] == b.shape[-2:]:
+        cov = transpose(cov)
+        _ATcov = transpose(A) / cov
     else:
-        _ATcov = A.T @ np.linalg.inv(cov)
+        _ATcov = transpose(A) @ np.linalg.inv(cov)
     p_cov = np.linalg.inv(_ATcov @ A)
     p = p_cov @ (_ATcov @ b)
     return p, p_cov
+
+
+def transpose(A):
+    return np.swapaxes(A, -2, -1)
