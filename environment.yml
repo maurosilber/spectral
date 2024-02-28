@@ -15,3 +15,10 @@ dependencies:
   - matplotlib
   - xarray
   - binlets
+  - scipy
+  - pip:
+    - dask-checkpoint
+  - dask
+  - fsspec
+  - zstandard
+  - cloudpickle
