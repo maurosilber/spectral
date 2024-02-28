@@ -14,6 +14,7 @@ class Denoiser(Protocol):
         variance: xarray.DataArray,
         *,
         sigma: float,
+        levels: int,
         calibration: xarray.DataArray,
     ) -> xarray.DataArray:
         ...
@@ -24,6 +25,7 @@ def nothing(
     variance: xarray.DataArray,
     *,
     sigma: float,
+    levels: int,
     calibration: xarray.DataArray,
 ):
     return unmixing.weighted_least_squares(calibration, spectrum, variance)
@@ -34,6 +36,7 @@ def single_spectrum(
     variance: xarray.DataArray,
     *,
     sigma: float,
+    levels: int,
     calibration: xarray.DataArray,
 ):
     spectrum = binlets_variance(
@@ -42,6 +45,7 @@ def single_spectrum(
         sigma=sigma,
         dim=Dim.spectrum,
         independent=True,
+        levels=levels,
     )
     return unmixing.weighted_least_squares(calibration, spectrum, variance)
 
@@ -51,6 +55,7 @@ def full_spectrum(
     variance: xarray.DataArray,
     *,
     sigma: float,
+    levels: int,
     calibration: xarray.DataArray,
 ):
     spectrum = binlets_variance(
@@ -59,6 +64,7 @@ def full_spectrum(
         sigma=sigma,
         dim=Dim.spectrum,
         independent=False,
+        levels=levels,
     )
     return unmixing.weighted_least_squares(calibration, spectrum, variance)
 
@@ -68,6 +74,7 @@ def continuous_spectrum(
     variance: xarray.DataArray,
     *,
     sigma: float,
+    levels: int,
     calibration: xarray.DataArray,
 ):
     spectrum = binlets_variance(
@@ -76,6 +83,7 @@ def continuous_spectrum(
         sigma=sigma,
         dim=None,
         independent=True,  # irrelevant as len(dim=None) == 1
+        levels=levels,
     )
     return unmixing.weighted_least_squares(calibration, spectrum, variance)
 
@@ -85,9 +93,16 @@ def single_component(
     variance: xarray.DataArray,
     *,
     sigma: float,
+    levels: int,
     calibration: xarray.DataArray,
 ):
-    return binlets_independent_components(calibration, spectrum, variance, sigma=sigma)
+    return binlets_independent_components(
+        calibration,
+        spectrum,
+        variance,
+        sigma=sigma,
+        levels=levels,
+    )
 
 
 def full_component(
@@ -95,6 +110,7 @@ def full_component(
     variance: xarray.DataArray,
     *,
     sigma: float,
+    levels: int,
     calibration: xarray.DataArray,
 ):
     spectrum = binlets_components_transform(
@@ -102,5 +118,6 @@ def full_component(
         sigma=sigma,
         dim=Dim.spectrum,
         calibration=calibration,
+        levels=levels,
     )
     return unmixing.weighted_least_squares(calibration, spectrum, variance)
