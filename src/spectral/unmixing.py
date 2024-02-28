@@ -89,3 +89,17 @@ def _weighted_least_squares(
 
 def transpose(A):
     return np.swapaxes(A, -2, -1)
+
+
+def covariance_propagation(
+    A: np.ndarray,
+    cov: np.ndarray,
+):
+    assert A.ndim == 2
+    n = A.shape[0]
+    if cov.shape[-2:] == (n, 1):
+        return np.linalg.inv(np.transpose(A) @ (A / cov))
+    elif cov.shape[-2:] == (n, n):
+        return np.linalg.inv(np.transpose(A) @ np.linalg.inv(cov) @ A)
+    else:
+        raise ValueError("dimensionality mismatch:", A.shape, cov.shape)
